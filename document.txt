@@ -1,0 +1,32 @@
+// các câu lệnh để tạo
+- install nestjs: npm i -g @nestjs/cli
+- create project: nest new `project`
+- run: npm run start:dev    
+mặc định sẽ chạy trên cổng 3000.
+
+// tạo thư mục
+- nest g module `users`     --> create folder user
+- nest g controller `users` --no-spec   --> create controller file 
+- nest g service `users` --no-spec      --> create service file
+
+
+// Type ORM + PostgreSQL
+- add dependence: npm install @nestjs/typeorm typeorm pg
+
+// add config to read .env
+- npm install @nestjs/config
+
+// create custom validation 
+--  npm install class-validator class-transformer
+
+// add jwt dependence
+-- npm install @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt
+-- npm install -D @types/passport-jwt  @types/bcrypt
+
+
+// add dependence to use cookie
+-- npm install cookie-parser 
+-- npm install -D @types/cookie-parser
+
+// about this service
+= database pw = AiStVdIvceDYfrKL
