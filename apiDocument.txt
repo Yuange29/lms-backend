@@ -1,0 +1,86 @@
+POST   /auth/signup            --> đăng ký
+POST   /auth/signin            --> đăng nhập
+POST   /auth/signout           --> đăng xuất
+POST   /auth/refresh           --> refresh access token
+GET    /auth/me                --> lấy info user hiện tại
+PATCH  /auth/change-password   --> đổi mật khẩu
+
+                    ===== user ======
+
+GET    /users                  --> list users (admin)
+GET    /users/:id              --> chi tiết user
+PATCH  /users/:id              --> update profile
+DELETE /users/:id              --> xóa user (admin)
+
+GET    /users/:id/enrollments  --> danh sách khóa học đã đăng ký
+GET    /users/:id/progress     --> tiến độ học
+GET    /users/:id/submissions  --> lịch sử làm quiz
+
+                    ===== courses ======
+
+GET    /courses                --> list courses (filter, search, pagination)
+GET    /courses/:id            --> chi tiết course
+POST   /courses                --> tạo course (instructor)
+PATCH  /courses/:id            --> update course
+DELETE /courses/:id            --> xóa course
+
+PATCH  /courses/:id/publish    --> publish/unpublish
+
+GET    /courses/:id/sections   --> lấy sections của course
+GET    /courses/:id/quizzes    --> lấy quiz của course
+
+
+                    ===== sections ======
+
+POST   /sections               --> tạo section
+PATCH  /sections/:id           --> update section
+DELETE /sections/:id           --> xóa section
+                    ======lessons ===========
+
+POST   /lessons                --> tạo lesson
+GET    /lessons/:id            --> chi tiết lesson
+PATCH  /lessons/:id            --> update lesson
+DELETE /lessons/:id            --> xóa lesson
+
+                    ===== enrollments =======
+
+POST   /enrollments            --> đăng ký khóa học
+GET    /enrollments/:id        --> chi tiết enrollment
+PATCH  /enrollments/:id        --> update status (cancel/complete)
+
+GET    /courses/:id/enrollments --> list học viên trong course (instructor)
+
+                    ======progress =========
+
+POST   /progress               --> mark lesson completed
+GET    /progress/:userId/:courseId --> tiến độ theo course
+
+
+                    ======= quizzes =======
+
+POST   /quizzes                --> tạo quiz
+GET    /quizzes/:id            --> chi tiết quiz
+PATCH  /quizzes/:id            --> update quiz
+DELETE /quizzes/:id            --> xóa quiz
+
+                    ======= questions =======
+
+POST   /questions              --> tạo câu hỏi
+PATCH  /questions/:id          --> update
+DELETE /questions/:id          --> xóa
+
+                    ====== answers ========
+
+POST   /answers                --> tạo đáp án
+PATCH  /answers/:id            --> update
+DELETE /answers/:id            --> xóa
+
+                    ====== submissions ========
+
+POST   /submissions            --> nộp bài quiz
+GET    /submissions/:id        --> xem kết quả
+GET    /quizzes/:id/submissions --> list submissions (instructor)
+
+                    ======= submissions_answers =======
+
+GET /submissions/:id/answers --> chi tiết bài làm

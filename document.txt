@@ -29,4 +29,4 @@ mặc định sẽ chạy trên cổng 3000.
 -- npm install -D @types/cookie-parser
 
 // about this service
-= database pw = AiStVdIvceDYfrKL
+= database pw = g1R6BOlGEKXWdjGS
