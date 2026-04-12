@@ -81,6 +81,10 @@ export class AuthService {
     };
   }
 
+  getMe(user: User) {
+    return user;
+  }
+
   private async generateToken(user: User) {
     const payload = { sub: user.id, email: user.email };
 
@@ -97,3 +101,5 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 }
+
+// PATCH  /auth/change-password   --> đổi mật khẩu
