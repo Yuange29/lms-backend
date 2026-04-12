@@ -26,6 +26,9 @@ export class User {
   @Column()
   role_id!: string;
 
+  @Column({ nullable: true })
+  refresh_token!: string;
+
   @CreateDateColumn()
   create_at!: Date;
 
