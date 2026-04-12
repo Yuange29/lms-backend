@@ -22,8 +22,8 @@ export class UsersService {
     return this.userRepository.find();
   }
 
-  async getUser(user_id: string) {
-    return this.userRepository.findOne({ where: { id: user_id } });
+  async getUser(id: string) {
+    return this.userRepository.findOne({ where: { id: id } });
   }
 
   async createUser(createReq: CreateUserDto) {
@@ -48,8 +48,8 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  async updateUser(user_id: string, req: UpdateUserDto) {
-    const user = await this.userRepository.findOne({ where: { id: user_id } });
+  async updateUser(id: string, req: UpdateUserDto) {
+    const user = await this.userRepository.findOne({ where: { id: id } });
 
     if (!user) throw new Error('User not exist');
 
@@ -58,12 +58,26 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  async deleteUser(user_id: string) {
-    const user = await this.userRepository.findOne({ where: { id: user_id } });
+  async deleteUser(id: string) {
+    const user = await this.userRepository.findOne({ where: { id: id } });
 
     if (!user) throw new Error('User not exist');
 
-    return this.userRepository.delete({ id: user_id });
+    return this.userRepository.delete({ id: id });
+  }
+
+  async changePassword(id: string, newPass: string) {
+    const user = await this.userRepository.findOne({ where: { id: id } });
+
+    if (!user) throw new Error('User not exist');
+
+    const hashNPass = await bcrypt.hash(newPass, 10);
+
+    this.userRepository.update(user.id, { password: hashNPass });
+
+    return {
+      success: true,
+    };
   }
 }
 

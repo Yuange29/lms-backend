@@ -1,32 +1,48 @@
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 
 import { UpdateUserDto } from './dto/update-user.dto copy';
 import { UsersService } from './users.service';
 
 @Controller('users')
+@UseGuards(JwtAccessGuard)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get('all')
-  getAllUser() {
-    return this.userService.getUsers();
+  async getAllUser() {
+    return await this.userService.getUsers();
   }
 
   @Get(':user_id')
-  getUser(@Param('user_id') user_id: string) {
-    return this.userService.getUser(user_id);
+  async getUser(@Param('user_id') user_id: string) {
+    return await this.userService.getUser(user_id);
   }
 
   @Patch(':user_id')
-  updateUserInfo(
+  async updateUserInfo(
     @Param('user_id') user_id: string,
     @Body() request: UpdateUserDto,
   ) {
-    return this.userService.updateUser(user_id, request);
+    return await this.userService.updateUser(user_id, request);
   }
 
   @Delete(':user_id')
-  deleteUser(@Param('user_id') user_id: string) {
-    return this.userService.deleteUser(user_id);
+  async deleteUser(@Param('user_id') user_id: string) {
+    return await this.userService.deleteUser(user_id);
+  }
+
+  @Patch('change-password:id')
+  async changePassword(@Param('id') id: string, @Body() newPass: string) {
+    return await this.userService.changePassword(id, newPass);
   }
 }
