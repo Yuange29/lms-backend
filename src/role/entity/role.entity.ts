@@ -1,7 +1,13 @@
-import { Column, CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 export type ROLE = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT';
 
+@Entity('role')
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

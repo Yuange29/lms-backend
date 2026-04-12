@@ -33,6 +33,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: { email: signInReq.email },
     });
+
     if (!user)
       throw new UnauthorizedException('Email or Password is not valid');
 

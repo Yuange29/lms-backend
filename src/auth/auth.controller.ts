@@ -23,12 +23,12 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/signup')
+  @Post('signup')
   async signupAccount(@Body() request: CreateUserDto) {
     return this.authService.signUpInfo(request);
   }
 
-  @Post('/signin')
+  @Post('signin')
   async signinAccount(
     @Body() request: SignInDataDto,
     @Res({ passthrough: true }) res: Response,
@@ -41,16 +41,16 @@ export class AuthController {
       sameSite: 'lax',
       maxAge: 7 * 24 * 3600 * 1000,
     });
-    return tokens.accessToken;
+    return { accessToken: tokens.accessToken };
   }
 
   @UseGuards(JwtRefreshGuard)
-  @Post('/refresh')
+  @Post('refresh')
   async refreshToken(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refresh = req.get('refreshToken');
+    const refresh = req.cookies['refreshToken'];
     if (!refresh) throw new UnauthorizedException('Refresh Not Found');
 
     const user = req.user as { sub: string };
@@ -64,7 +64,7 @@ export class AuthController {
       maxAge: 7 * 24 * 3600 * 1000,
     });
 
-    return tokens.accessToken;
+    return { accessToken: tokens.accessToken };
   }
 
   @UseGuards(JwtAccessGuard)

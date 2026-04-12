@@ -45,7 +45,7 @@ export class UsersService {
       password: hashPassword,
     });
 
-    return this.userRepository.create(user);
+    return this.userRepository.save(user);
   }
 
   async updateUser(user_id: string, req: UpdateUserDto) {
