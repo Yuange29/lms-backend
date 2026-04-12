@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -14,6 +15,7 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
+  @Exclude() // exclude can hide this attribute when show User
   @Column()
   password!: string;
 
@@ -26,6 +28,7 @@ export class User {
   @Column()
   role_id!: string;
 
+  @Exclude()
   @Column({ nullable: true })
   refresh_token!: string;
 

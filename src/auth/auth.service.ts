@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { plainToInstance } from 'class-transformer';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
@@ -78,12 +79,16 @@ export class AuthService {
     this.userRepository.update(user.id, { refresh_token: '' });
 
     return {
-      success: true,
+      message: 'Sign out success',
     };
   }
 
-  getMe(user: User) {
-    return user;
+  async getMe(id: string) {
+    const user = await this.userRepository.findOne({ where: { id: id } });
+
+    if (!user) throw new ConflictException('User not found');
+
+    return plainToInstance(User, user);
   }
 
   private async generateToken(user: User) {

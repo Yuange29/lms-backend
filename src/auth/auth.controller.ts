@@ -69,13 +69,21 @@ export class AuthController {
 
   @UseGuards(JwtAccessGuard)
   @Get('me')
-  myInfo(@GetUser() user: User) {
-    return user;
+  async myInfo(@GetUser() user: User) {
+    return { user: await this.authService.getMe(user.id) };
+  }
+
+  @UseGuards(JwtAccessGuard)
+  @Post('signout')
+  async signOut(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = req.user as { sub: string };
+    res.clearCookie('refreshToken');
+
+    return await this.authService.logoutToken(user.sub);
   }
 }
-// POST   /auth/signup            --> đăng ký
-// POST   /auth/signin            --> đăng nhập
-// POST   /auth/signout           --> đăng xuất
-// POST   /auth/refresh           --> refresh access token
-// GET    /auth/me                --> lấy info user hiện tại
+
 // PATCH  /auth/change-password   --> đổi mật khẩu

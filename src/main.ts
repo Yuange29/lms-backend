@@ -1,7 +1,7 @@
 import cookieParser from 'cookie-parser';
 
-import { ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 
@@ -14,6 +14,8 @@ async function bootstrap() {
     origin: true,
     creadential: true,
   });
+
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector))); // config to use Exclude
 
   app.useGlobalPipes(
     new ValidationPipe({
