@@ -1,4 +1,6 @@
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { Role, Roles } from 'src/common/decorators/check-roles.decorator';
+import { RolesGuard } from 'src/common/guards/role-check.guard';
 
 import {
   Body,
@@ -14,10 +16,11 @@ import { UpdateUserDto } from './dto/update-user.dto copy';
 import { UsersService } from './users.service';
 
 @Controller('users')
-@UseGuards(JwtAccessGuard)
+@UseGuards(JwtAccessGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
+  @Roles(Role.admin)
   @Get('all')
   async getAllUser() {
     return await this.userService.getUsers();

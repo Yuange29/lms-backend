@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
+import { Role } from 'src/role/entity/role.entity';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
@@ -24,6 +25,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
   ) {}
 
   async signUpInfo(createReq: CreateUserDto) {
@@ -92,7 +95,11 @@ export class AuthService {
   }
 
   private async generateToken(user: User) {
-    const payload = { sub: user.id, email: user.email };
+    const role = await this.roleRepository.findOne({
+      where: { id: user.role_id },
+    });
+
+    const payload = { sub: user.id, email: user.email, role: role?.role };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
