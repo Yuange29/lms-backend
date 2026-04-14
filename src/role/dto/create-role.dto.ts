@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-import { ROLE } from '../entity/role.entity';
+import { ROLE } from '../../users/entity/role.entity';
 
 export class CreateRoleDto {
   @IsString()

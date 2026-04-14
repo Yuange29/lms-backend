@@ -1,4 +1,4 @@
-import { Role } from 'src/role/entity/role.entity';
+import { Role } from 'src/users/entity/role.entity';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 

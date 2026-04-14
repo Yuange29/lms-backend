@@ -1,7 +1,9 @@
+import { User } from 'src/users/entity/users.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -17,4 +19,7 @@ export class Role {
 
   @CreateDateColumn()
   create_at!: Date;
+
+  @OneToMany(() => User, (user) => user.role)
+  users?: User[];
 }

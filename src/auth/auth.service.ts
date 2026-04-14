@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
-import { Role } from 'src/role/entity/role.entity';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { Role } from 'src/users/entity/role.entity';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';

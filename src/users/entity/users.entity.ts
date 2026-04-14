@@ -1,8 +1,11 @@
 import { Exclude } from 'class-transformer';
+import { Role } from 'src/users/entity/role.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -25,8 +28,12 @@ export class User {
   @Column({ nullable: true })
   avatar_url!: string;
 
-  @Column()
+  @Column({ nullable: true })
   role_id!: string;
+
+  @ManyToOne(() => Role, (role) => role.users, { nullable: true })
+  @JoinColumn({ name: 'role_id' })
+  role!: Role;
 
   @Exclude()
   @Column({ nullable: true })

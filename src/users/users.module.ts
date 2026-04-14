@@ -1,4 +1,4 @@
-import { Role } from 'src/role/entity/role.entity';
+import { Role } from 'src/users/entity/role.entity';
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';

@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { Role } from 'src/role/entity/role.entity';
+import { Role } from 'src/users/entity/role.entity';
 import { Repository } from 'typeorm';
 
 import { ConflictException, Injectable } from '@nestjs/common';
