@@ -13,11 +13,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { GetUser } from '../common/decorators/current-user.decorator';
+import { JwtAccessGuard } from '../common/guards/jwt-access.guard';
+import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
 import { AuthService } from './auth.service';
-import { GetUser } from './decorators/CurrentUser.decorator';
 import { SignInDataDto } from './dto/signin.dto';
-import { JwtAccessGuard } from './guards/jwt-access.guard';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Controller('auth')
 export class AuthController {

@@ -1,5 +1,6 @@
-import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
-import { Role, Roles } from 'src/common/decorators/check-roles.decorator';
+import { Roles } from 'src/common/decorators/check-roles.decorator';
+import { Role } from 'src/common/enums/roles.enum';
+import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
 import { RolesGuard } from 'src/common/guards/role-check.guard';
 
 import {
