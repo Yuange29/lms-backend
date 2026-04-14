@@ -26,11 +26,13 @@ export class UsersController {
     return await this.userService.getUsers();
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Get(':user_id')
   async getUser(@Param('user_id') user_id: string) {
     return await this.userService.getUser(user_id);
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Patch(':user_id')
   async updateUserInfo(
     @Param('user_id') user_id: string,
@@ -39,11 +41,13 @@ export class UsersController {
     return await this.userService.updateUser(user_id, request);
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Delete(':user_id')
   async deleteUser(@Param('user_id') user_id: string) {
     return await this.userService.deleteUser(user_id);
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Patch('change-password:id')
   async changePassword(@Param('id') id: string, @Body() newPass: string) {
     return await this.userService.changePassword(id, newPass);
