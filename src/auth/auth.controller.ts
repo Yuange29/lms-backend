@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { User } from 'src/users/entity/users.entity';
 
 import {
   Body,
@@ -69,8 +68,8 @@ export class AuthController {
 
   @UseGuards(JwtAccessGuard)
   @Get('me')
-  async myInfo(@GetUser() user: User) {
-    return { user: await this.authService.getMe(user.id) };
+  async myInfo(@GetUser('id') id: string) {
+    return { user: await this.authService.getMe(id) };
   }
 
   @UseGuards(JwtAccessGuard)

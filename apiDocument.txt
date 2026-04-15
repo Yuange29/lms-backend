@@ -1,3 +1,22 @@
+                ============ Database relationship==============
+Role
+ └── User
+      ├── Course (instructor)
+      ├── Enrollment ── Course
+      ├── Progress ── Lesson
+      └── Submission ── Quiz
+
+Course
+ ├── Section
+ │    └── Lesson
+ ├── Enrollment
+ └── Quiz
+      ├── Question
+      │     └── Answer
+      └── Submission
+            └── SubmissionAnswer
+
+
 POST   /auth/signup            --> đăng ký
 POST   /auth/signin            --> đăng nhập
 POST   /auth/signout           --> đăng xuất
