@@ -42,7 +42,7 @@ export class UsersController {
     return await this.userService.updateUser(user_id, request);
   }
 
-  @Roles(Role.admin, Role.instructor, Role.student)
+  @Roles(Role.admin)
   @Delete(':user_id')
   async deleteUser(@Param('user_id') user_id: string) {
     return await this.userService.deleteUser(user_id);

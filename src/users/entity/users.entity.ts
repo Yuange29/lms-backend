@@ -1,4 +1,8 @@
 import { Exclude } from 'class-transformer';
+import { Course } from 'src/courses/entities/course.entity';
+import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
+import { Progress } from 'src/progress/entities/progress.entity';
+import { Submission } from 'src/submissions/entities/submission.entity';
 import { Role } from 'src/users/entity/role.entity';
 import {
   Column,
@@ -6,6 +10,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -44,4 +49,20 @@ export class User {
 
   @UpdateDateColumn()
   update_at!: Date;
+
+  @OneToMany(() => Course, (course) => course.instructor, { nullable: true })
+  courses!: Course[];
+
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.user, {
+    nullable: true,
+  })
+  enrollments!: Enrollment[];
+
+  @OneToMany(() => Progress, (progress) => progress.user, { nullable: true })
+  progress!: Progress[];
+
+  @OneToMany(() => Submission, (submission) => submission.user, {
+    nullable: true,
+  })
+  submissions!: Submission[];
 }
