@@ -94,6 +94,12 @@ export class CoursesService {
     return course;
   }
 
+  async findManageDetail(id: string, userId: string, role: string | string[]) {
+    const course = await this.findOne(id);
+    this.assertCanManageCourse(course, userId, role);
+    return course;
+  }
+
   private assertCanViewCourse(
     course: Course,
     userId: string,
