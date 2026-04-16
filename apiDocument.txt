@@ -42,63 +42,62 @@ GET    /courses/:id            --> chi tiết course
 POST   /courses                --> tạo course (instructor)
 PATCH  /courses/:id            --> update course
 DELETE /courses/:id            --> xóa course
-
 PATCH  /courses/:id/publish    --> publish/unpublish
-
-GET    /courses/:id/sections   --> lấy sections của course
-GET    /courses/:id/quizzes    --> lấy quiz của course
 
 
                     ===== sections ======
 
-POST   /sections               --> tạo section
-PATCH  /sections/:id           --> update section
-DELETE /sections/:id           --> xóa section
+GET    /courses/:id/sections
+POST   /courses/:id/sections
+PATCH  /courses/:courseId/sections/:sectionId
+DELETE /courses/:courseId/sections/:sectionId
                     ======lessons ===========
 
-POST   /lessons                --> tạo lesson
-GET    /lessons/:id            --> chi tiết lesson
-PATCH  /lessons/:id            --> update lesson
-DELETE /lessons/:id            --> xóa lesson
+GET    /courses/:courseId/sections/:sectionId/lessons
+POST   /courses/:courseId/sections/:sectionId/lessons
+PATCH  /courses/:courseId/sections/:sectionId/lessons/:lessonId
+DELETE /courses/:courseId/sections/:sectionId/lessons/:lessonId
 
                     ===== enrollments =======
 
-POST   /enrollments            --> đăng ký khóa học
-GET    /enrollments/:id        --> chi tiết enrollment
-PATCH  /enrollments/:id        --> update status (cancel/complete)
-
-GET    /courses/:id/enrollments --> list học viên trong course (instructor)
+POST   /enrollments                        # student tự enroll
+GET    /enrollments/my                     # danh sách course đã enroll
+GET    /enrollments/:id
+PATCH  /enrollments/:id/status             # cancel
+GET    /courses/:id/enrollments            # instructor xem ai đã enroll
 
                     ======progress =========
 
-POST   /progress               --> mark lesson completed
-GET    /progress/:userId/:courseId --> tiến độ theo course
+GET    /progress/my?course_id=             # student xem progress theo course
+POST   /progress/lessons/:lessonId/complete
+DELETE /progress/lessons/:lessonId/complete
 
 
                     ======= quizzes =======
-
-POST   /quizzes                --> tạo quiz
-GET    /quizzes/:id            --> chi tiết quiz
-PATCH  /quizzes/:id            --> update quiz
-DELETE /quizzes/:id            --> xóa quiz
+GET    /courses/:courseId/quizzes
+GET    /courses/:courseId/quizzes/:quizId
+POST   /courses/:courseId/quizzes          # instructor
+PATCH  /courses/:courseId/quizzes/:quizId  # instructor
+DELETE /courses/:courseId/quizzes/:quizId  # instructor
 
                     ======= questions =======
 
-POST   /questions              --> tạo câu hỏi
-PATCH  /questions/:id          --> update
-DELETE /questions/:id          --> xóa
+GET    /quizzes/:quizId/questions
+POST   /quizzes/:quizId/questions
+PATCH  /quizzes/:quizId/questions/:questionId
+DELETE /quizzes/:quizId/questions/:questionId
 
                     ====== answers ========
-
-POST   /answers                --> tạo đáp án
-PATCH  /answers/:id            --> update
-DELETE /answers/:id            --> xóa
+POST   /questions/:questionId/answers
+PATCH  /questions/:questionId/answers/:answerId
+DELETE /questions/:questionId/answers/:answerId
 
                     ====== submissions ========
 
-POST   /submissions            --> nộp bài quiz
-GET    /submissions/:id        --> xem kết quả
-GET    /quizzes/:id/submissions --> list submissions (instructor)
+POST   /quizzes/:quizId/submissions        # student nộp bài
+GET    /quizzes/:quizId/submissions/my     # student xem bài của mình
+GET    /quizzes/:quizId/submissions        # instructor xem tất cả
+GET    /submissions/:id                    # chi tiết bài nộp + submission_answers
 
                     ======= submissions_answers =======
 

@@ -1,3 +1,4 @@
+import { Role } from 'src/common/enums/roles.enum';
 import { Course } from 'src/courses/entities/course.entity';
 import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Repository } from 'typeorm';
@@ -53,7 +54,27 @@ export class CoursesService {
     });
   }
 
-  async findOne(id: string, userId: string) {
+  async myCourses(instructorId: string) {
+    return await this.courseRepository.find({
+      where: { instructor_id: instructorId },
+      relations: ['instructor'],
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        thumbnail_url: true,
+        created_at: true,
+        instructor: {
+          id: true,
+          full_name: true,
+          avatar_url: true,
+        },
+      },
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  async findOne(id: string) {
     const course = await this.courseRepository.findOne({
       where: { id: id },
       relations: ['instructor', 'sections', 'sections.lessons'],
@@ -64,23 +85,63 @@ export class CoursesService {
 
     if (!course) throw new NotFoundException('Course not found');
 
-    if (!course.published && course.instructor_id !== userId) {
-      throw new ForbiddenException();
-    }
     return course;
   }
 
-  async update(id: string, updateReq: UpdateCourseDto, userId: string) {
-    const course = await this.findOne(id, userId);
-    if (course.instructor_id !== userId) throw new ForbiddenException();
+  async findDetail(id: string, userId: string, role: string | string[]) {
+    const course = await this.findOne(id);
+    this.assertCanViewCourse(course, userId, role);
+    return course;
+  }
+
+  private assertCanViewCourse(
+    course: Course,
+    userId: string,
+    role: string | string[],
+  ) {
+    const roles = Array.isArray(role) ? role : [role];
+    const isAdmin = roles.includes(Role.admin);
+    const isOwner = course.instructor_id === userId;
+
+    if (!course.published && !isAdmin && !isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to view this course',
+      );
+    }
+  }
+
+  private assertCanManageCourse(
+    course: Course,
+    userId: string,
+    role: string | string[],
+  ) {
+    const roles = Array.isArray(role) ? role : [role];
+    const isAdmin = roles.includes(Role.admin);
+    const isOwner = course.instructor_id === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to manage this course',
+      );
+    }
+  }
+
+  async update(
+    id: string,
+    updateReq: UpdateCourseDto,
+    userId: string,
+    role: string | string[],
+  ) {
+    const course = await this.findOne(id);
+    this.assertCanManageCourse(course, userId, role);
 
     Object.assign(course, updateReq);
     return await this.courseRepository.save(course);
   }
 
-  async togglePublish(id: string, userId: string) {
-    const course = await this.findOne(id, userId);
-    if (course.instructor_id !== userId) throw new ForbiddenException();
+  async togglePublish(id: string, userId: string, role: string | string[]) {
+    const course = await this.findOne(id);
+    this.assertCanManageCourse(course, userId, role);
 
     if (!course.published) {
       const hasContent = course.sections.some((s) => s.lessons.length > 0);
@@ -92,9 +153,9 @@ export class CoursesService {
     return await this.courseRepository.save(course);
   }
 
-  async delete(id: string, userId: string) {
-    const course = await this.findOne(id, userId);
-
+  async delete(id: string, userId: string, role: string | string[]) {
+    const course = await this.findOne(id);
+    this.assertCanManageCourse(course, userId, role);
     const enrollCount = await this.enrollmentRepository.count({
       where: { course_id: id },
     });
