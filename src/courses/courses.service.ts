@@ -136,7 +136,7 @@ export class CoursesService {
     return await this.courseRepository.remove(course);
   }
 
-  private checkManage(course: Course, userId: string, role: Role) {
+  checkManage(course: Course, userId: string, role: Role) {
     if (role === Role.admin) {
       return;
     }
