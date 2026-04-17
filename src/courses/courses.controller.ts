@@ -47,9 +47,9 @@ export class CoursesController {
   async getInfo(
     @Param('id') id: string,
     @GetUser('id') userId: string,
-    @GetUser('role') role: string | string[],
+    @GetUser('role') role: Role,
   ) {
-    return { course: await this.courseService.findDetail(id, userId, role) };
+    return { course: await this.courseService.findOne(id, userId, role) };
   }
 
   @Roles(Role.instructor)
@@ -67,7 +67,7 @@ export class CoursesController {
     @Param('id') id: string,
     @Body() request: UpdateCourseDto,
     @GetUser('id') userId: string,
-    @GetUser('role') role: string | string[],
+    @GetUser('role') role: Role,
   ) {
     return {
       course: await this.courseService.update(id, request, userId, role),
@@ -79,7 +79,7 @@ export class CoursesController {
   async deleteCourse(
     @Param('id') id: string,
     @GetUser('id') userId: string,
-    @GetUser('role') role: string | string[],
+    @GetUser('role') role: Role,
   ) {
     return { course: await this.courseService.delete(id, userId, role) };
   }
@@ -89,7 +89,7 @@ export class CoursesController {
   async togglePublish(
     @Param('id') id: string,
     @GetUser('id') userId: string,
-    @GetUser('role') role: string | string[],
+    @GetUser('role') role: Role,
   ) {
     return { course: await this.courseService.togglePublish(id, userId, role) };
   }

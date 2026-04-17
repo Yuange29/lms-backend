@@ -74,7 +74,7 @@ export class CoursesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId: string, role: Role) {
     const course = await this.courseRepository.findOne({
       where: { id: id },
       relations: ['instructor', 'sections', 'sections.lessons'],
@@ -84,93 +84,69 @@ export class CoursesService {
     });
 
     if (!course) throw new NotFoundException('Course not found');
-
-    return course;
-  }
-
-  async findDetail(id: string, userId: string, role: string | string[]) {
-    const course = await this.findOne(id);
-    this.assertCanViewCourse(course, userId, role);
-    return course;
-  }
-
-  async findManageDetail(id: string, userId: string, role: string | string[]) {
-    const course = await this.findOne(id);
-    this.assertCanManageCourse(course, userId, role);
-    return course;
-  }
-
-  private assertCanViewCourse(
-    course: Course,
-    userId: string,
-    role: string | string[],
-  ) {
-    const roles = Array.isArray(role) ? role : [role];
-    const isAdmin = roles.includes(Role.admin);
-    const isOwner = course.instructor_id === userId;
-
-    if (!course.published && !isAdmin && !isOwner) {
+    if (
+      !course.published &&
+      role !== Role.admin &&
+      !(role === Role.instructor && course.instructor_id === userId)
+    ) {
       throw new ForbiddenException(
         'You do not have permission to view this course',
       );
     }
-  }
 
-  private assertCanManageCourse(
-    course: Course,
-    userId: string,
-    role: string | string[],
-  ) {
-    const roles = Array.isArray(role) ? role : [role];
-    const isAdmin = roles.includes(Role.admin);
-    const isOwner = course.instructor_id === userId;
-
-    if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You do not have permission to manage this course',
-      );
-    }
+    return course;
   }
 
   async update(
     id: string,
     updateReq: UpdateCourseDto,
-    userId: string,
-    role: string | string[],
+    instructorId: string,
+    role: Role,
   ) {
-    const course = await this.findOne(id);
-    this.assertCanManageCourse(course, userId, role);
+    const course = await this.findOne(id, instructorId, role);
+
+    this.checkManage(course, instructorId, role);
 
     Object.assign(course, updateReq);
     return await this.courseRepository.save(course);
   }
 
-  async togglePublish(id: string, userId: string, role: string | string[]) {
-    const course = await this.findOne(id);
-    this.assertCanManageCourse(course, userId, role);
+  async togglePublish(id: string, userId: string, role: Role) {
+    const course = await this.findOne(id, userId, role);
 
-    if (!course.published) {
-      const hasContent = course.sections.some((s) => s.lessons.length > 0);
-      if (!hasContent)
-        throw new BadRequestException('Course must have at least 1 lesson');
-    }
+    this.checkManage(course, userId, role);
 
     course.published = !course.published;
     return await this.courseRepository.save(course);
   }
 
-  async delete(id: string, userId: string, role: string | string[]) {
-    const course = await this.findOne(id);
-    this.assertCanManageCourse(course, userId, role);
+  async delete(id: string, userId: string, role: Role) {
+    const course = await this.findOne(id, userId, role);
+
+    this.checkManage(course, userId, role);
+
     const enrollCount = await this.enrollmentRepository.count({
       where: { course_id: id },
     });
 
     if (enrollCount > 0)
       throw new BadRequestException(
-        'Can delete this course, this already have enrollment',
+        "Can't delete this course because it already has enrollments",
       );
-
     return await this.courseRepository.remove(course);
+  }
+
+  private checkManage(course: Course, userId: string, role: Role) {
+    if (role === Role.admin) {
+      return;
+    }
+
+    if (role === Role.instructor && course.instructor_id === userId) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'You do not have permission to manage this course',
+    );
   }
 }
