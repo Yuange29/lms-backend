@@ -1,13 +1,11 @@
 import { Role } from 'src/common/enums/roles.enum';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 import { Course } from 'src/courses/entities/course.entity';
 import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Repository } from 'typeorm';
 
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
+    BadRequestException, ForbiddenException, Injectable, NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -23,10 +21,10 @@ export class CoursesService {
     private readonly enrollmentRepository: Repository<Enrollment>,
   ) {}
 
-  async create(createReq: CreateCourseDto, instructorId: string) {
+  async create(createReq: CreateCourseDto, user: AuthUser) {
     const course = this.courseRepository.create({
       ...createReq,
-      instructor_id: instructorId,
+      instructor_id: user.id,
       published: false,
     });
     return await this.courseRepository.save(course);
@@ -54,9 +52,9 @@ export class CoursesService {
     });
   }
 
-  async myCourses(instructorId: string) {
+  async myCourses(user: AuthUser) {
     return await this.courseRepository.find({
-      where: { instructor_id: instructorId },
+      where: { instructor_id: user.id },
       relations: ['instructor'],
       select: {
         id: true,
@@ -74,7 +72,8 @@ export class CoursesService {
     });
   }
 
-  async findOne(id: string, userId: string, role: Role) {
+  async findOne(id: string, userOrUserId: AuthUser | string, role?: Role) {
+    const user = this.toAuthUser(userOrUserId, role);
     const course = await this.courseRepository.findOne({
       where: { id: id },
       relations: ['instructor', 'sections', 'sections.lessons'],
@@ -86,8 +85,8 @@ export class CoursesService {
     if (!course) throw new NotFoundException('Course not found');
     if (
       !course.published &&
-      role !== Role.admin &&
-      !(role === Role.instructor && course.instructor_id === userId)
+      user.role !== Role.admin &&
+      !(user.role === Role.instructor && course.instructor_id === user.id)
     ) {
       throw new ForbiddenException(
         'You do not have permission to view this course',
@@ -97,33 +96,22 @@ export class CoursesService {
     return course;
   }
 
-  async update(
-    id: string,
-    updateReq: UpdateCourseDto,
-    instructorId: string,
-    role: Role,
-  ) {
-    const course = await this.findOne(id, instructorId, role);
-
-    this.checkManage(course, instructorId, role);
+  async update(id: string, updateReq: UpdateCourseDto, user: AuthUser) {
+    const course = await this.checkOwnerOrAdmin(id, user);
 
     Object.assign(course, updateReq);
     return await this.courseRepository.save(course);
   }
 
-  async togglePublish(id: string, userId: string, role: Role) {
-    const course = await this.findOne(id, userId, role);
-
-    this.checkManage(course, userId, role);
+  async togglePublish(id: string, user: AuthUser) {
+    const course = await this.checkOwnerOrAdmin(id, user);
 
     course.published = !course.published;
     return await this.courseRepository.save(course);
   }
 
-  async delete(id: string, userId: string, role: Role) {
-    const course = await this.findOne(id, userId, role);
-
-    this.checkManage(course, userId, role);
+  async delete(id: string, user: AuthUser) {
+    const course = await this.checkOwnerOrAdmin(id, user);
 
     const enrollCount = await this.enrollmentRepository.count({
       where: { course_id: id },
@@ -136,17 +124,58 @@ export class CoursesService {
     return await this.courseRepository.remove(course);
   }
 
-  checkManage(course: Course, userId: string, role: Role) {
-    if (role === Role.admin) {
+  checkManage(course: Course, userOrUserId: AuthUser | string, role?: Role) {
+    const user = this.toAuthUser(userOrUserId, role);
+
+    if (user.role === Role.admin) {
       return;
     }
 
-    if (role === Role.instructor && course.instructor_id === userId) {
+    if (user.role === Role.instructor && course.instructor_id === user.id) {
       return;
     }
 
     throw new ForbiddenException(
       'You do not have permission to manage this course',
     );
+  }
+
+  async checkOwnerOrAdmin(
+    courseId: string,
+    userOrUserId: AuthUser | string,
+    role?: Role,
+  ) {
+    const user = this.toAuthUser(userOrUserId, role);
+    const course = await this.courseRepository.findOne({
+      where: { id: courseId },
+      relations: ['instructor', 'sections', 'sections.lessons'],
+      order: {
+        sections: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
+      },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    this.checkManage(course, user);
+
+    return course;
+  }
+
+  private toAuthUser(userOrUserId: AuthUser | string, role?: Role): AuthUser {
+    if (typeof userOrUserId !== 'string') {
+      return userOrUserId;
+    }
+
+    if (!role) {
+      throw new ForbiddenException('Role is required');
+    }
+
+    return {
+      id: userOrUserId,
+      email: '',
+      role,
+    };
   }
 }

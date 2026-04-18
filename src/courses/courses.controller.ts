@@ -3,6 +3,7 @@ import { GetUser } from 'src/common/decorators/current-user.decorator';
 import { Role } from 'src/common/enums/roles.enum';
 import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
 import { RolesGuard } from 'src/common/guards/role-check.guard';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 
 import {
   Body,
@@ -38,27 +39,23 @@ export class CoursesController {
 
   @Roles(Role.instructor)
   @Get('my')
-  async getUserCourse(@GetUser('id') id: string) {
-    return { courses: await this.courseService.myCourses(id) };
+  async getUserCourse(@GetUser() user: AuthUser) {
+    return { courses: await this.courseService.myCourses(user) };
   }
 
   @Roles(Role.admin, Role.instructor, Role.student)
   @Get(':id')
-  async getInfo(
-    @Param('id') id: string,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
-  ) {
-    return { course: await this.courseService.findOne(id, userId, role) };
+  async getInfo(@Param('id') id: string, @GetUser() user: AuthUser) {
+    return { course: await this.courseService.findOne(id, user) };
   }
 
   @Roles(Role.instructor)
   @Post()
   async createCourse(
     @Body() request: CreateCourseDto,
-    @GetUser('id') id: string,
+    @GetUser() user: AuthUser,
   ) {
-    return { course: await this.courseService.create(request, id) };
+    return { course: await this.courseService.create(request, user) };
   }
 
   @Roles(Role.instructor, Role.admin)
@@ -66,31 +63,22 @@ export class CoursesController {
   async updateCourse(
     @Param('id') id: string,
     @Body() request: UpdateCourseDto,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
+    @GetUser() user: AuthUser,
   ) {
     return {
-      course: await this.courseService.update(id, request, userId, role),
+      course: await this.courseService.update(id, request, user),
     };
   }
 
   @Roles(Role.instructor, Role.admin)
   @Delete(':id')
-  async deleteCourse(
-    @Param('id') id: string,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
-  ) {
-    return { course: await this.courseService.delete(id, userId, role) };
+  async deleteCourse(@Param('id') id: string, @GetUser() user: AuthUser) {
+    return { course: await this.courseService.delete(id, user) };
   }
 
   @Roles(Role.instructor, Role.admin)
   @Patch(':id/publish')
-  async togglePublish(
-    @Param('id') id: string,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
-  ) {
-    return { course: await this.courseService.togglePublish(id, userId, role) };
+  async togglePublish(@Param('id') id: string, @GetUser() user: AuthUser) {
+    return { course: await this.courseService.togglePublish(id, user) };
   }
 }
