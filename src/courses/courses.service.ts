@@ -1,13 +1,11 @@
 import { Role } from 'src/common/enums/roles.enum';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 import { Course } from 'src/courses/entities/course.entity';
 import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Repository } from 'typeorm';
 
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
+    BadRequestException, ForbiddenException, Injectable, NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -23,12 +21,13 @@ export class CoursesService {
     private readonly enrollmentRepository: Repository<Enrollment>,
   ) {}
 
-  async create(createReq: CreateCourseDto, instructorId: string) {
+  async create(createReq: CreateCourseDto, id: string) {
     const course = this.courseRepository.create({
       ...createReq,
-      instructor_id: instructorId,
+      instructor_id: id,
       published: false,
     });
+
     return await this.courseRepository.save(course);
   }
 
@@ -54,9 +53,9 @@ export class CoursesService {
     });
   }
 
-  async myCourses(instructorId: string) {
+  async myCourses(user: AuthUser) {
     return await this.courseRepository.find({
-      where: { instructor_id: instructorId },
+      where: { instructor_id: user.id },
       relations: ['instructor'],
       select: {
         id: true,
@@ -74,20 +73,13 @@ export class CoursesService {
     });
   }
 
-  async findOne(id: string, userId: string, role: Role) {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      relations: ['instructor', 'sections', 'sections.lessons'],
-      order: {
-        sections: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
-      },
-    });
+  async findOne(id: string, user: AuthUser) {
+    const course = await this.findCourseById(id);
 
-    if (!course) throw new NotFoundException('Course not found');
     if (
       !course.published &&
-      role !== Role.admin &&
-      !(role === Role.instructor && course.instructor_id === userId)
+      user.role !== Role.admin &&
+      !(user.role === Role.instructor && course.instructor_id === user.id)
     ) {
       throw new ForbiddenException(
         'You do not have permission to view this course',
@@ -97,56 +89,51 @@ export class CoursesService {
     return course;
   }
 
-  async update(
-    id: string,
-    updateReq: UpdateCourseDto,
-    instructorId: string,
-    role: Role,
-  ) {
-    const course = await this.findOne(id, instructorId, role);
-
-    this.checkManage(course, instructorId, role);
+  async update(id: string, updateReq: UpdateCourseDto) {
+    const course = await this.findCourseById(id);
 
     Object.assign(course, updateReq);
+
     return await this.courseRepository.save(course);
   }
 
-  async togglePublish(id: string, userId: string, role: Role) {
-    const course = await this.findOne(id, userId, role);
-
-    this.checkManage(course, userId, role);
+  async togglePublish(id: string) {
+    const course = await this.findCourseById(id);
 
     course.published = !course.published;
+
     return await this.courseRepository.save(course);
   }
 
-  async delete(id: string, userId: string, role: Role) {
-    const course = await this.findOne(id, userId, role);
-
-    this.checkManage(course, userId, role);
+  async delete(id: string) {
+    const course = await this.findCourseById(id);
 
     const enrollCount = await this.enrollmentRepository.count({
       where: { course_id: id },
     });
 
-    if (enrollCount > 0)
+    if (enrollCount > 0) {
       throw new BadRequestException(
         "Can't delete this course because it already has enrollments",
       );
+    }
+
     return await this.courseRepository.remove(course);
   }
 
-  checkManage(course: Course, userId: string, role: Role) {
-    if (role === Role.admin) {
-      return;
+  private async findCourseById(id: string) {
+    const course = await this.courseRepository.findOne({
+      where: { id },
+      relations: ['instructor', 'sections', 'sections.lessons'],
+      order: {
+        sections: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
+      },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
     }
 
-    if (role === Role.instructor && course.instructor_id === userId) {
-      return;
-    }
-
-    throw new ForbiddenException(
-      'You do not have permission to manage this course',
-    );
+    return course;
   }
 }

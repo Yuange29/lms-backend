@@ -2,7 +2,7 @@ import { SetMetadata } from '@nestjs/common';
 
 export interface OwnershipOptions {
   entity: 'course' | 'section' | 'lesson' | 'quiz' | 'question' | 'answer';
-  paramKey: string;
+  paramKey?: string;
 }
 
 export const CHECK_OWNER_KEY = 'check_ownership';

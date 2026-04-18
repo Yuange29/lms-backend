@@ -7,7 +7,7 @@ import { Section } from 'src/sections/entities/section.entity';
 import { Repository } from 'typeorm';
 
 import {
-    CanActivate, ExecutionContext, ForbiddenException, NotFoundException
+    CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFoundException
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,7 +15,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CHECK_OWNER_KEY, OwnershipOptions } from '../decorators/check-owner.decorator';
 import { Role } from '../enums/roles.enum';
 
-export class OwnerGuard implements CanActivate {
+@Injectable()
+export class OwnershipGuard implements CanActivate {
   constructor(
     private readonly reflect: Reflector,
     @InjectRepository(Course) private courseRepo: Repository<Course>,
@@ -39,7 +40,7 @@ export class OwnerGuard implements CanActivate {
     const paramKey = options.paramKey ?? 'id';
     const entityId = request.params[paramKey];
 
-    if (user.role?.name === Role.admin) return true;
+    if (user?.role === Role.admin) return true;
 
     const instructorId = await this.resolveInstructorId(
       options.entity,
