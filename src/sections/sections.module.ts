@@ -1,5 +1,5 @@
-import { Lesson } from 'src/lessons/entities/lesson.entity';
 import { CoursesModule } from 'src/courses/courses.module';
+import { Lesson } from 'src/lessons/entities/lesson.entity';
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
