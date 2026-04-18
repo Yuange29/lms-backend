@@ -49,8 +49,14 @@ export class UsersController {
   }
 
   @Roles(Role.admin, Role.instructor, Role.student)
-  @Patch('change-password:id')
+  @Patch('change-password/:id')
   async changePassword(@Param('id') id: string, @Body() newPass: string) {
     return await this.userService.changePassword(id, newPass);
+  }
+
+  @Roles(Role.admin)
+  @Patch('change-role/:id')
+  async changeRole(@Param('id') id: string) {
+    return await this.userService.changeRoleToInstructor(id);
   }
 }

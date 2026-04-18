@@ -8,7 +8,15 @@ import { RolesGuard } from 'src/common/guards/role-check.guard';
 import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 
 import {
-    Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CoursesService } from './courses.service';

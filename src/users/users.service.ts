@@ -79,6 +79,24 @@ export class UsersService {
       success: true,
     };
   }
+
+  async changeRoleToInstructor(id: string) {
+    const user = await this.userRepository.findOne({ where: { id: id } });
+
+    if (!user) throw new Error('User not exist');
+
+    const instructorRole = await this.roleRepository.findOne({
+      where: { role: 'INSTRUCTOR' },
+    });
+
+    if (!instructorRole) throw new Error('Instructor role not found');
+
+    this.userRepository.update(user.id, { role_id: instructorRole.id });
+
+    return {
+      success: true,
+    };
+  }
 }
 
 // GET    /users/:id/enrollments  --> danh sách khóa học đã đăng ký
