@@ -1,8 +1,11 @@
+import { CheckOwner } from 'src/common/decorators/check-owner.decorator';
 import { Roles } from 'src/common/decorators/check-roles.decorator';
 import { GetUser } from 'src/common/decorators/current-user.decorator';
 import { Role } from 'src/common/enums/roles.enum';
 import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
+import { OwnershipGuard } from 'src/common/guards/owner-check.guard';
 import { RolesGuard } from 'src/common/guards/role-check.guard';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 
 import {
   Body,
@@ -16,7 +19,6 @@ import {
 } from '@nestjs/common';
 
 import { CreateSectionDto } from './dto/create-section.dto';
-import { UpdateSectionDto } from './dto/update-section.dto';
 import { SectionsService } from './sections.service';
 
 @Controller('courses')
@@ -24,69 +26,47 @@ import { SectionsService } from './sections.service';
 export class SectionsController {
   constructor(private readonly sectionService: SectionsService) {}
 
-  @Roles(Role.student, Role.instructor, Role.admin)
-  @Get(':courseId/sections')
-  async getSections(
-    @Param('courseId') courseId: string,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
-  ) {
-    return { sections: await this.sectionService.get(courseId, userId, role) };
-  }
-
-  @Roles(Role.instructor, Role.admin)
+  @Roles(Role.admin, Role.instructor)
   @Post(':courseId/sections')
   async createSection(
     @Param('courseId') courseId: string,
     @Body() request: CreateSectionDto,
-    @GetUser('id') userId: string,
-    @GetUser('role') role: Role,
   ) {
-    return {
-      section: await this.sectionService.create(
-        courseId,
-        userId,
-        request,
-        role,
-      ),
-    };
+    return { section: await this.sectionService.create(request, courseId) };
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
+  @Get(':courseId/sections/:sectionId')
+  async getSection(
+    @Param('courseId') courseId: string,
+    @Param('sectionId') sectionId: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.sectionService.getSection(sectionId, courseId, user);
+  }
+
+  @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
+  @CheckOwner({ entity: 'section' })
   @Patch(':courseId/sections/:sectionId')
   async updateSection(
     @Param('courseId') courseId: string,
     @Param('sectionId') sectionId: string,
-    @Body() request: UpdateSectionDto,
-    @GetUser('id') instructorId: string,
-    @GetUser('role') role: Role,
+    @Body() request: CreateSectionDto,
   ) {
     return {
-      section: await this.sectionService.update(
-        courseId,
-        sectionId,
-        instructorId,
-        request,
-        role,
-      ),
+      section: await this.sectionService.update(sectionId, courseId, request),
     };
   }
 
+  @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
+  @CheckOwner({ entity: 'section' })
   @Delete(':courseId/sections/:sectionId')
   async deleteSection(
     @Param('courseId') courseId: string,
     @Param('sectionId') sectionId: string,
-    @GetUser('id') instructorId: string,
-    @GetUser('role') role: Role,
   ) {
-    await this.sectionService.delete(courseId, sectionId, instructorId, role);
-    return {
-      message: 'Section deleted successfully',
-    };
+    return await this.sectionService.delete(courseId, sectionId);
   }
 }
-// GET    /courses/:id/sections
-// POST   /courses/:id/sections
-// PATCH  /courses/:courseId/sections/:sectionId
-// DELETE /courses/:courseId/sections/:sectionId

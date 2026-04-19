@@ -5,13 +5,13 @@ import { Controller, UseGuards } from '@nestjs/common';
 
 import { LessonsService } from './lessons.service';
 
-@Controller('courses')
+@Controller('sections')
 @UseGuards(JwtAccessGuard, RolesGuard)
 export class LessonsController {
   constructor(private readonly lessonService: LessonsService) {}
 }
 
-// GET    /courses/:courseId/sections/:sectionId/lessons
-// POST   /courses/:courseId/sections/:sectionId/lessons
-// PATCH  /courses/:courseId/sections/:sectionId/lessons/:lessonId
-// DELETE /courses/:courseId/sections/:sectionId/lessons/:lessonId
+// GET    sections/:sectionId/lessons
+// POST   sections/:sectionId/lessons
+// PATCH  sections/:sectionId/lessons/:lessonId
+// DELETE sections/:sectionId/lessons/:lessonId

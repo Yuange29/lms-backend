@@ -1,7 +1,6 @@
-import { Role } from 'src/common/enums/roles.enum';
-import { Course } from 'src/courses/entities/course.entity';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 import { CoursesService } from 'src/courses/courses.service';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,122 +17,60 @@ export class SectionsService {
     private readonly courseService: CoursesService,
   ) {}
 
-  async get(courseId: string, userId: string, role: Role) {
-    await this.courseService.findOne(courseId, userId, role);
+  async create(createReq: CreateSectionDto, courseId: string) {
+    await this.courseService.findCourseById(courseId);
 
-    return await this.sectionRepository.find({
+    const lastSection = await this.sectionRepository.findOne({
       where: { course_id: courseId },
-      relations: ['lessons', 'course'],
-      order: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
+      order: { order_index: 'DESC' },
     });
+
+    return await this.sectionRepository.save(
+      this.sectionRepository.create({
+        ...createReq,
+        course_id: courseId,
+        order_index: (lastSection?.order_index ?? -1) + 1,
+      }),
+    );
   }
 
-  async create(
-    courseId: string,
-    instructorId: string,
-    createReq: CreateSectionDto,
-    role: Role,
-  ) {
-    const course = await this.courseService.findOne(
-      courseId,
-      instructorId,
-      role,
-    );
-    this.courseService.checkManage(course, instructorId, role);
-
-    return await this.sectionRepository.manager.transaction(async (manager) => {
-      await manager.getRepository(Course).findOne({
-        where: { id: courseId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      const sectionRepository = manager.getRepository(Section);
-      const lastSection = await sectionRepository.findOne({
-        where: { course_id: courseId },
-        order: { order_index: 'DESC' },
-      });
-
-      return await sectionRepository.save(
-        sectionRepository.create({
-          ...createReq,
-          course_id: courseId,
-          order_index: (lastSection?.order_index ?? -1) + 1,
-        }),
-      );
+  //don't show info if course not published, excluse admin and owner instructor
+  async getSection(sectionId: string, courseId: string, user: AuthUser) {
+    await this.courseService.findOne(courseId, user); // check permissons can show that section - course
+    return await this.sectionRepository.findOne({
+      where: { id: sectionId, course_id: courseId },
+      relations: ['lessons'],
+      order: { lessons: { order_index: 'DESC' } },
     });
   }
 
   async update(
-    courseId: string,
     sectionId: string,
-    instructorId: string,
+    courseId: string,
     updateReq: UpdateSectionDto,
-    role: Role,
   ) {
-    const course = await this.courseService.findOne(
-      courseId,
-      instructorId,
-      role,
-    );
-    this.courseService.checkManage(course, instructorId, role);
+    await this.courseService.findCourseById(courseId);
 
     const section = await this.sectionRepository.findOne({
       where: { id: sectionId, course_id: courseId },
     });
 
-    if (!section) throw new NotFoundException('Not found section');
+    if (!section) throw new NotFoundException("Section doesn't exist");
 
     Object.assign(section, updateReq);
 
     return await this.sectionRepository.save(section);
   }
 
-  async delete(
-    courseId: string,
-    sectionId: string,
-    instructorId: string,
-    role: Role,
-  ) {
-    const course = await this.courseService.findOne(
-      courseId,
-      instructorId,
-      role,
-    );
-    this.courseService.checkManage(course, instructorId, role);
+  async delete(courseId: string, sectionId: string) {
+    await this.courseService.findCourseById(courseId);
 
     const section = await this.sectionRepository.findOne({
       where: { id: sectionId, course_id: courseId },
     });
 
-    if (!section) throw new NotFoundException('Not found section');
+    if (!section) throw new NotFoundException("Section doesn't exist");
 
-    await this.sectionRepository.manager.transaction(async (manager) => {
-      await manager.remove(Section, section);
-      await this.reindexSections(courseId, manager);
-    });
-
-    return;
-  }
-
-  private async reindexSections(courseId: string, manager: EntityManager) {
-    const sectionRepository = manager.getRepository(Section);
-    const sections = await sectionRepository.find({
-      where: { course_id: courseId },
-      order: { order_index: 'ASC', created_at: 'ASC' },
-    });
-
-    const sectionsNeedUpdate = sections.filter(
-      (section, index) => section.order_index !== index,
-    );
-
-    if (sectionsNeedUpdate.length === 0) {
-      return;
-    }
-
-    for (const [index, section] of sections.entries()) {
-      section.order_index = index;
-    }
-
-    await sectionRepository.save(sections);
+    return await this.sectionRepository.remove(section);
   }
 }

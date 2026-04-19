@@ -5,7 +5,10 @@ import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Repository } from 'typeorm';
 
 import {
-    BadRequestException, ForbiddenException, Injectable, NotFoundException
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -21,12 +24,13 @@ export class CoursesService {
     private readonly enrollmentRepository: Repository<Enrollment>,
   ) {}
 
-  async create(createReq: CreateCourseDto, user: AuthUser) {
+  async create(createReq: CreateCourseDto, id: string) {
     const course = this.courseRepository.create({
       ...createReq,
-      instructor_id: user.id,
+      instructor_id: id,
       published: false,
     });
+
     return await this.courseRepository.save(course);
   }
 
@@ -72,17 +76,9 @@ export class CoursesService {
     });
   }
 
-  async findOne(id: string, userOrUserId: AuthUser | string, role?: Role) {
-    const user = this.toAuthUser(userOrUserId, role);
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      relations: ['instructor', 'sections', 'sections.lessons'],
-      order: {
-        sections: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
-      },
-    });
+  async findOne(id: string, user: AuthUser) {
+    const course = await this.findCourseById(id);
 
-    if (!course) throw new NotFoundException('Course not found');
     if (
       !course.published &&
       user.role !== Role.admin &&
@@ -96,58 +92,41 @@ export class CoursesService {
     return course;
   }
 
-  async update(id: string, updateReq: UpdateCourseDto, user: AuthUser) {
-    const course = await this.checkOwnerOrAdmin(id, user);
+  async update(id: string, updateReq: UpdateCourseDto) {
+    const course = await this.findCourseById(id);
 
     Object.assign(course, updateReq);
+
     return await this.courseRepository.save(course);
   }
 
-  async togglePublish(id: string, user: AuthUser) {
-    const course = await this.checkOwnerOrAdmin(id, user);
+  async togglePublish(id: string) {
+    const course = await this.findCourseById(id);
 
     course.published = !course.published;
+
     return await this.courseRepository.save(course);
   }
 
-  async delete(id: string, user: AuthUser) {
-    const course = await this.checkOwnerOrAdmin(id, user);
+  async delete(id: string) {
+    const course = await this.findCourseById(id);
 
     const enrollCount = await this.enrollmentRepository.count({
       where: { course_id: id },
     });
 
-    if (enrollCount > 0)
+    if (enrollCount > 0) {
       throw new BadRequestException(
         "Can't delete this course because it already has enrollments",
       );
+    }
+
     return await this.courseRepository.remove(course);
   }
 
-  checkManage(course: Course, userOrUserId: AuthUser | string, role?: Role) {
-    const user = this.toAuthUser(userOrUserId, role);
-
-    if (user.role === Role.admin) {
-      return;
-    }
-
-    if (user.role === Role.instructor && course.instructor_id === user.id) {
-      return;
-    }
-
-    throw new ForbiddenException(
-      'You do not have permission to manage this course',
-    );
-  }
-
-  async checkOwnerOrAdmin(
-    courseId: string,
-    userOrUserId: AuthUser | string,
-    role?: Role,
-  ) {
-    const user = this.toAuthUser(userOrUserId, role);
+  async findCourseById(id: string) {
     const course = await this.courseRepository.findOne({
-      where: { id: courseId },
+      where: { id },
       relations: ['instructor', 'sections', 'sections.lessons'],
       order: {
         sections: { order_index: 'ASC', lessons: { order_index: 'ASC' } },
@@ -158,24 +137,6 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    this.checkManage(course, user);
-
     return course;
-  }
-
-  private toAuthUser(userOrUserId: AuthUser | string, role?: Role): AuthUser {
-    if (typeof userOrUserId !== 'string') {
-      return userOrUserId;
-    }
-
-    if (!role) {
-      throw new ForbiddenException('Role is required');
-    }
-
-    return {
-      id: userOrUserId,
-      email: '',
-      role,
-    };
   }
 }
