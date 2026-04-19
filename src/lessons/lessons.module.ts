@@ -1,4 +1,3 @@
-import { CoursesModule } from 'src/courses/courses.module';
 import { Progress } from 'src/progress/entities/progress.entity';
 import { Section } from 'src/sections/entities/section.entity';
 
@@ -10,7 +9,7 @@ import { LessonsController } from './lessons.controller';
 import { LessonsService } from './lessons.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Lesson, Progress, Section]), CoursesModule],
+  imports: [TypeOrmModule.forFeature([Lesson, Progress, Section])],
   controllers: [LessonsController],
   providers: [LessonsService],
 })
