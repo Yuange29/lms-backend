@@ -5,7 +5,10 @@ import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Repository } from 'typeorm';
 
 import {
-    BadRequestException, ForbiddenException, Injectable, NotFoundException
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -121,7 +124,7 @@ export class CoursesService {
     return await this.courseRepository.remove(course);
   }
 
-  private async findCourseById(id: string) {
+  async findCourseById(id: string) {
     const course = await this.courseRepository.findOne({
       where: { id },
       relations: ['instructor', 'sections', 'sections.lessons'],

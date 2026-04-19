@@ -1,3 +1,4 @@
+import { CommonModule } from 'src/common/common.module';
 import { CoursesModule } from 'src/courses/courses.module';
 import { Lesson } from 'src/lessons/entities/lesson.entity';
 
@@ -9,7 +10,11 @@ import { SectionsController } from './sections.controller';
 import { SectionsService } from './sections.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Section, Lesson]), CoursesModule],
+  imports: [
+    TypeOrmModule.forFeature([Section, Lesson]),
+    CoursesModule,
+    CommonModule,
+  ],
   controllers: [SectionsController],
   providers: [SectionsService],
 })
