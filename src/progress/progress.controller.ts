@@ -1,6 +1,6 @@
 import { GetUser } from 'src/common/decorators/current-user.decorator';
 
-import { Controller, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 
 import { ProgressService } from './progress.service';
 
@@ -8,28 +8,32 @@ import { ProgressService } from './progress.service';
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
-  @Get('my/lessonId')
-  async find(
-    @GetUser('id') userId: string,
+  @Post('lessons/:lessonId/complete')
+  async completeLesson(
     @Param('lessonId') lessonId: string,
+    @GetUser('id') userId: string,
   ) {
-    return {
-      progress: await this.progressService.findProgressByCourseId(
-        userId,
-        lessonId,
-      ),
-    };
+    return this.progressService.complete(userId, lessonId);
   }
 
-  @Patch('lessons/:lessonId/complete')
-  async complete(
-    @GetUser('id') userId: string,
+  @Delete('lessons/:lessonId/complete')
+  async uncompleteLesson(
     @Param('lessonId') lessonId: string,
+    @GetUser('id') userId: string,
   ) {
-    await this.progressService.completeLesson(userId, lessonId);
+    return this.progressService.uncompleted(userId, lessonId);
+  }
+
+  @Get('my')
+  getMyCourseProgress(
+    @Query('course_id') courseId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.progressService.getMyCourseProgress(userId, courseId);
   }
 }
-// GET    /progress/my?lesson_id=
+
+// GET /progress/my?course_id=
 // # student xem progress theo course
 // POST   /progress/lessons/:lessonId/complete
 // DELETE /progress/lessons/:lessonId/complete

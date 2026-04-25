@@ -31,5 +31,5 @@ export class Progress {
   is_completed!: boolean;
 
   @Column({ nullable: true })
-  completed_at!: Date;
+  completed_at?: Date | null;
 }
