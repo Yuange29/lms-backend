@@ -30,6 +30,6 @@ export class Progress {
   @Column({ default: false })
   is_completed!: boolean;
 
-  @Column({ nullable: true })
-  completed_at?: Date | null;
+  @Column({ type: 'timestamptz', nullable: true })
+  completed_at!: Date | null;
 }
