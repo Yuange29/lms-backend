@@ -5,7 +5,15 @@ import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
 import { OwnershipGuard } from 'src/common/guards/owner-check.guard';
 import { RolesGuard } from 'src/common/guards/role-check.guard';
 
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
