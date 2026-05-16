@@ -5,6 +5,7 @@ import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
 import { QuestionsService } from 'src/questions/questions.service';
 
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -32,7 +33,7 @@ export class QuestionsController {
   @Post(':quizId/questions')
   async createQuestion(
     @Param('quizId') quizId: string,
-    createReq: CreateQuestionsDto,
+    @Body() createReq: CreateQuestionsDto,
   ) {
     return { question: await this.questionService.create(createReq, quizId) };
   }
@@ -43,7 +44,7 @@ export class QuestionsController {
   async updateQuestion(
     @Param('quizId') quizId: string,
     @Param('questionId') questionId: string,
-    updateReq: CreateQuestionsDto,
+    @Body() updateReq: CreateQuestionsDto,
   ) {
     return {
       question: await this.questionService.update(
