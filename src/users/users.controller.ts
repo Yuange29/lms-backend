@@ -8,6 +8,7 @@ import {
   Controller,
   Delete,
   Get,
+  Head,
   Param,
   Patch,
   UseGuards,
@@ -60,7 +61,7 @@ export class UsersController {
     return await this.userService.changeRoleToInstructor(id);
   }
 
-  @Get('health')
+  @Head('health')
   health() {
     return {
       status: 'ok',
