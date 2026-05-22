@@ -14,8 +14,12 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: true,
-    creadential: true,
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://lms-backend-panq.onrender.com',
+    ],
+    credentials: true,
   });
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector))); // config to use Exclude
