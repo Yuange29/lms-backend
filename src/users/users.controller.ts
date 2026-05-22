@@ -59,4 +59,12 @@ export class UsersController {
   async changeRole(@Param('id') id: string) {
     return await this.userService.changeRoleToInstructor(id);
   }
+
+  @Get('health')
+  health() {
+    return {
+      status: 'ok',
+      timestamp: new Date(),
+    };
+  }
 }
