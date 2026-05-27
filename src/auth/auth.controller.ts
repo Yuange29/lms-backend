@@ -8,7 +8,6 @@ import {
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 
@@ -49,12 +48,13 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refresh = req.cookies['refreshToken'];
-    if (!refresh) throw new UnauthorizedException('Refresh Not Found');
+    const user = req.user as {
+      sub: string;
+      email: string;
+      refreshToken: string;
+    };
 
-    const user = req.user as { sub: string };
-
-    const tokens = await this.authService.refresh(user.sub, refresh);
+    const tokens = await this.authService.refresh(user.sub, user.refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
