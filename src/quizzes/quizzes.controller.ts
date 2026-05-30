@@ -1,9 +1,11 @@
 import { CheckOwner } from 'src/common/decorators/check-owner.decorator';
 import { Roles } from 'src/common/decorators/check-roles.decorator';
+import { GetUser } from 'src/common/decorators/current-user.decorator';
 import { Role } from 'src/common/enums/roles.enum';
 import { JwtAccessGuard } from 'src/common/guards/jwt-access.guard';
 import { OwnershipGuard } from 'src/common/guards/owner-check.guard';
 import { RolesGuard } from 'src/common/guards/role-check.guard';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 
 import {
   Body,
@@ -11,6 +13,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -20,24 +23,34 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { QuizzesService } from './quizzes.service';
 
 @Controller('courses')
+@UseGuards(JwtAccessGuard, RolesGuard)
 export class QuizzesController {
   constructor(private readonly quizService: QuizzesService) {}
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Get(':courseId/quizzes')
-  async getAllQuizInCourse(@Param('courseId') courseId: string) {
-    return { quizzes: await this.quizService.getQuizzesByCourseId(courseId) };
+  async getAllQuizInCourse(
+    @Param('courseId') courseId: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return {
+      quizzes: await this.quizService.getQuizzesByCourseId(courseId, user),
+    };
   }
 
+  @Roles(Role.admin, Role.instructor, Role.student)
   @Get(':courseId/quizzes/:quizId')
   async getDetailQuiz(
     @Param('courseId') courseId: string,
     @Param('quizId') quizId: string,
+    @GetUser() user: AuthUser,
   ) {
-    return { quiz: await this.quizService.getQuizById(courseId, quizId) };
+    return { quiz: await this.quizService.getQuizById(courseId, quizId, user) };
   }
 
-  @UseGuards(JwtAccessGuard, RolesGuard)
+  @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
+  @CheckOwner({ entity: 'course', paramKey: 'courseId' })
   @Post(':courseId/quizzes')
   async createQuiz(
     @Param('courseId') courseId: string,
@@ -46,10 +59,10 @@ export class QuizzesController {
     return { quiz: await this.quizService.createQuiz(courseId, createReq) };
   }
 
-  @UseGuards(JwtAccessGuard, RolesGuard, OwnershipGuard)
+  @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'quiz' })
-  @Post(':courseId/quizzes/:quizId')
+  @CheckOwner({ entity: 'quiz', paramKey: 'quizId' })
+  @Patch(':courseId/quizzes/:quizId')
   async updateQuiz(
     @Param('courseId') courseId: string,
     @Param('quizId') quizId: string,
@@ -60,15 +73,15 @@ export class QuizzesController {
     };
   }
 
-  @UseGuards(JwtAccessGuard, RolesGuard, OwnershipGuard)
+  @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
-  @CheckOwner({ entity: 'quiz' })
+  @CheckOwner({ entity: 'quiz', paramKey: 'quizId' })
   @Delete(':courseId/quizzes/:quizId')
   async deleteQuiz(
     @Param('courseId') courseId: string,
     @Param('quizId') quizId: string,
   ) {
-    return await this.quizService.deleteQuizyId(courseId, quizId);
+    return await this.quizService.deleteQuizById(courseId, quizId);
   }
 }
 // GET    /courses/:courseId/quizzes

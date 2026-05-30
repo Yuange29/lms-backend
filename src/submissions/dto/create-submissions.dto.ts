@@ -13,7 +13,7 @@ export class SubmissionAnswers {
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })
-  answers_id!: string;
+  answers_id!: string[];
 }
 
 export class SubmissionAnswersDto {

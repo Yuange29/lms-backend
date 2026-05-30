@@ -1,3 +1,5 @@
+import { Role } from 'src/common/enums/roles.enum';
+import { AuthUser } from 'src/common/interfaces/auth-user.interface';
 import { Repository } from 'typeorm';
 
 import {
@@ -18,11 +20,33 @@ export class QuestionsService {
     private readonly questionRepo: Repository<Question>,
   ) {}
 
-  async getAllQuestion(quizId: string) {
-    return await this.questionRepo.find({
+  async getAllQuestion(quizId: string, user: AuthUser) {
+    const questions = await this.questionRepo.find({
       where: { quiz_id: quizId },
       relations: ['answers'],
+      order: { order_index: 'ASC' },
     });
+
+    return questions.map((question) => ({
+      id: question.id,
+      quiz_id: question.quiz_id,
+      question_text: question.question_text,
+      type: question.type,
+      order_index: question.order_index,
+      answers: question.answers.map((answer) => {
+        const baseAnswer = {
+          id: answer.id,
+          question_id: answer.question_id,
+          answer_text: answer.answer_text,
+        };
+
+        if (user.role === Role.instructor || user.role === Role.admin) {
+          return { ...baseAnswer, is_correct: answer.is_correct };
+        }
+
+        return baseAnswer;
+      }),
+    }));
   }
 
   async create(createReq: CreateQuestionsDto, quizId: string) {

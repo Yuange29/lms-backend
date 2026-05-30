@@ -31,7 +31,9 @@ export class LessonsController {
     return { lessons: await this.lessonService.get(sectionId) };
   }
 
+  @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
+  @CheckOwner({ entity: 'section', paramKey: 'sectionId' })
   @Post(':sectionId/lessons')
   async createLesson(
     @Param('sectionId') sectionId: string,
@@ -42,7 +44,7 @@ export class LessonsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
-  @CheckOwner({ entity: 'lesson' })
+  @CheckOwner({ entity: 'lesson', paramKey: 'lessonId' })
   @Patch(':sectionId/lessons/:lessonId')
   async updateLesson(
     @Param('sectionId') sectionId: string,
@@ -56,7 +58,7 @@ export class LessonsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
-  @CheckOwner({ entity: 'lesson' })
+  @CheckOwner({ entity: 'lesson', paramKey: 'lessonId' })
   @Delete(':sectionId/lessons/:lessonId')
   async deleteLesson(
     @Param('sectionId') sectionId: string,

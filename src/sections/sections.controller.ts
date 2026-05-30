@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 
 import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
 import { SectionsService } from './sections.service';
 
 @Controller('courses')
@@ -26,7 +27,9 @@ import { SectionsService } from './sections.service';
 export class SectionsController {
   constructor(private readonly sectionService: SectionsService) {}
 
+  @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
+  @CheckOwner({ entity: 'course', paramKey: 'courseId' })
   @Post(':courseId/sections')
   async createSection(
     @Param('courseId') courseId: string,
@@ -47,12 +50,12 @@ export class SectionsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'section' })
+  @CheckOwner({ entity: 'section', paramKey: 'sectionId' })
   @Patch(':courseId/sections/:sectionId')
   async updateSection(
     @Param('courseId') courseId: string,
     @Param('sectionId') sectionId: string,
-    @Body() request: CreateSectionDto,
+    @Body() request: UpdateSectionDto,
   ) {
     return {
       section: await this.sectionService.update(sectionId, courseId, request),
@@ -61,7 +64,7 @@ export class SectionsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'section' })
+  @CheckOwner({ entity: 'section', paramKey: 'sectionId' })
   @Delete(':courseId/sections/:sectionId')
   async deleteSection(
     @Param('courseId') courseId: string,

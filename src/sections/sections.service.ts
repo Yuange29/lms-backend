@@ -34,13 +34,14 @@ export class SectionsService {
     );
   }
 
-  //don't show info if course not published, excluse admin and owner instructor
+  // don't show section if course is not published, unless user is admin or owning instructor
   async getSection(sectionId: string, courseId: string, user: AuthUser) {
-    await this.courseService.findOne(courseId, user); // check permissons can show that section - course
+    await this.courseService.findOne(courseId, user);
+
     return await this.sectionRepository.findOne({
       where: { id: sectionId, course_id: courseId },
       relations: ['lessons'],
-      order: { lessons: { order_index: 'DESC' } },
+      order: { lessons: { order_index: 'ASC' } },
     });
   }
 

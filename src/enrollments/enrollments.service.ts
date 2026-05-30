@@ -22,19 +22,19 @@ export class EnrollmentsService {
   async enroll(userId: string, courseId: string) {
     await this.isCourseActive(courseId);
 
-    const isEnrolled = await this.enrollmentRepository.findOne({
+    const existingEnrollment = await this.enrollmentRepository.findOne({
       where: { user_id: userId, course_id: courseId },
     });
 
-    if (!isEnrolled)
+    if (existingEnrollment)
       throw new ConflictException('Already enrolled in this course');
 
-    return await this.enrollmentRepository.save(
-      this.enrollmentRepository.create({
-        user_id: userId,
-        course_id: courseId,
-      }),
-    );
+    const enrollment = this.enrollmentRepository.create({
+      user_id: userId,
+      course_id: courseId,
+    });
+
+    return await this.enrollmentRepository.save(enrollment);
   }
 
   async getMine(userId: string) {

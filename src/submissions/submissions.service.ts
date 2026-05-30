@@ -1,4 +1,5 @@
 import { EnrollmentStatus } from 'src/common/enums/enrollment.enum';
+import { QuestionType } from 'src/common/enums/question-type.enum';
 import { Enrollment } from 'src/enrollments/entities/enrollent.entity';
 import { Question } from 'src/questions/entities/question.entity';
 import { Quiz } from 'src/quizzes/entities/quiz.entity';
@@ -16,6 +17,7 @@ import {
   SubmissionAnswers,
   SubmissionAnswersDto,
 } from './dto/create-submissions.dto';
+import { SubmissionAnswer } from './entities/submission-answer.entity';
 import { Submission } from './entities/submission.entity';
 
 @Injectable()
@@ -23,6 +25,8 @@ export class SubmissionsService {
   constructor(
     @InjectRepository(Submission)
     private readonly submissionRepo: Repository<Submission>,
+    @InjectRepository(SubmissionAnswer)
+    private readonly submissionAnswerRepo: Repository<SubmissionAnswer>,
     @InjectRepository(Quiz)
     private readonly quizRepo: Repository<Quiz>,
     @InjectRepository(Enrollment)
@@ -48,18 +52,22 @@ export class SubmissionsService {
         const newSubmission = manager.create(Submission, {
           user_id: userId,
           quiz_id: quizId,
-          score: score,
+          score,
           submitted_at: new Date(),
         });
-        const savedSubmission = await this.submissionRepo.save(newSubmission);
 
-        const submissionAnswers = createReq.answers.map((item) =>
-          manager.create(SubmissionAnswers, {
-            submission_id: savedSubmission.id,
-            question_id: item.question_id,
-            answers_id: item.answers_id,
-          }),
+        const savedSubmission = await manager.save(newSubmission);
+
+        const submissionAnswers = createReq.answers.flatMap((item) =>
+          item.answers_id.map((answerId) =>
+            manager.create(SubmissionAnswer, {
+              submission_id: savedSubmission.id,
+              question_id: item.question_id,
+              answer_id: answerId,
+            }),
+          ),
         );
+
         await manager.save(submissionAnswers);
 
         return savedSubmission;
@@ -67,6 +75,53 @@ export class SubmissionsService {
     );
 
     return this.buildResult(submission, quizQuestions, gradedAnswers);
+  }
+
+  async getMySubmission(quizId: string, userId: string) {
+    const quiz = await this.quizRepo.findOne({
+      where: { id: quizId },
+      relations: ['course'],
+    });
+
+    if (!quiz) throw new NotFoundException('Quiz not found');
+
+    const enroll = await this.enrollRepo.findOne({
+      where: {
+        user_id: userId,
+        course_id: quiz.course_id,
+        status: EnrollmentStatus.active,
+      },
+    });
+
+    if (!enroll)
+      throw new ForbiddenException('You are not enrolled in this course');
+
+    const submission = await this.submissionRepo.findOne({
+      where: { quiz_id: quizId, user_id: userId },
+      relations: [
+        'submission_answers',
+        'submission_answers.question',
+        'submission_answers.answer',
+      ],
+      order: { submitted_at: 'DESC' },
+    });
+
+    if (!submission) throw new NotFoundException('Submission not found');
+
+    const questions = await this.questionRepo.find({
+      where: { quiz_id: quizId },
+      relations: ['answers'],
+      order: { order_index: 'ASC' },
+    });
+
+    const answeredMap = new Map<string, string[]>();
+
+    submission.submission_answers.forEach((answer) => {
+      const existing = answeredMap.get(answer.question_id) ?? [];
+      answeredMap.set(answer.question_id, [...existing, answer.answer_id]);
+    });
+
+    return this.buildResult(submission, questions, answeredMap);
   }
 
   async getQuiz(quizId: string, userId: string) {
@@ -85,14 +140,16 @@ export class SubmissionsService {
       },
     });
 
-    if (!enroll) throw new ForbiddenException('You are not enroll that course');
+    if (!enroll)
+      throw new ForbiddenException('You are not enrolled in this course');
 
     const questions = await this.questionRepo.find({
       where: { quiz_id: quizId },
       relations: ['answers'],
+      order: { order_index: 'ASC' },
     });
 
-    if (questions.length == 0)
+    if (questions.length === 0)
       throw new BadRequestException('Quiz has no question');
 
     return questions;
@@ -101,7 +158,7 @@ export class SubmissionsService {
   private gradeSubmissions(
     questions: Question[],
     userAnswers: SubmissionAnswers[],
-  ): { score: number; gradedAnswers: Map<string, string> } {
+  ): { score: number; gradedAnswers: Map<string, string[]> } {
     const answeredMap = new Map(
       userAnswers.map((a) => [a.question_id, a.answers_id]),
     );
@@ -109,26 +166,37 @@ export class SubmissionsService {
     let correctCount = 0;
 
     for (const question of questions) {
-      const chosenAnswerId = answeredMap.get(question.id);
-      if (!chosenAnswerId) continue;
+      const selectedAnswers = new Set(answeredMap.get(question.id) ?? []);
+      const correctAnswerIds = question.answers
+        .filter((answer) => answer.is_correct)
+        .map((answer) => answer.id);
+      const correctAnswerSet = new Set(correctAnswerIds);
 
-      const chosenAnswer = question.answers.find(
-        (a) => a.id === chosenAnswerId,
-      );
-      if (chosenAnswer?.is_correct) correctCount++;
+      if (selectedAnswers.size === 0) continue;
+
+      const isCorrect =
+        selectedAnswers.size === correctAnswerSet.size &&
+        [...selectedAnswers].every((answerId) =>
+          correctAnswerSet.has(answerId),
+        );
+
+      if (question.type === QuestionType.single && selectedAnswers.size !== 1)
+        continue;
+
+      if (isCorrect) correctCount++;
     }
 
     const score = parseFloat(
       ((correctCount / questions.length) * 10).toFixed(2),
     );
 
-    return { score: score, gradedAnswers: answeredMap };
+    return { score, gradedAnswers: answeredMap };
   }
 
   private buildResult(
     submission: Submission,
     questions: Question[],
-    answeredMap: Map<string, string>,
+    answeredMap: Map<string, string[]>,
   ) {
     return {
       submission_id: submission.id,
@@ -136,19 +204,35 @@ export class SubmissionsService {
       score: submission.score,
       submitted_at: submission.submitted_at,
       total_questions: questions.length,
-      detail: questions.map((q) => {
-        const chosenAnswerId = answeredMap.get(q.id);
-        const correctAnswer = q.answers.find((a) => a.is_correct);
-        const chosenAnswer = q.answers.find((a) => a.id === chosenAnswerId);
+      detail: questions.map((question) => {
+        const selectedIds = new Set(answeredMap.get(question.id) ?? []);
+        const selectedAnswers = question.answers
+          .filter((answer) => selectedIds.has(answer.id))
+          .map((answer) => ({
+            id: answer.id,
+            answer_text: answer.answer_text,
+          }));
+
+        const correctAnswers = question.answers
+          .filter((answer) => answer.is_correct)
+          .map((answer) => ({
+            id: answer.id,
+            answer_text: answer.answer_text,
+          }));
+
+        const isCorrect =
+          selectedAnswers.length > 0 &&
+          selectedAnswers.length === correctAnswers.length &&
+          selectedAnswers.every((selected) =>
+            correctAnswers.some((correct) => correct.id === selected.id),
+          );
 
         return {
-          question_id: q.id,
-          question_text: q.question_text,
-          chosen_answer_id: chosenAnswerId ?? null,
-          chosen_answer_text: chosenAnswer?.answer_text ?? null,
-          correct_answer_id: correctAnswer?.id ?? null,
-          correct_answer_text: correctAnswer?.answer_text ?? null,
-          is_correct: chosenAnswer?.is_correct ?? false,
+          question_id: question.id,
+          question_text: question.question_text,
+          selected_answers: selectedAnswers,
+          correct_answers: correctAnswers,
+          is_correct: isCorrect,
         };
       }),
     };

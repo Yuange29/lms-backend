@@ -11,11 +11,10 @@ import { Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 
 @Controller('enrollments')
-@UseGuards(JwtAccessGuard)
+@UseGuards(JwtAccessGuard, RolesGuard)
 export class EnrollmentsController {
   constructor(private readonly enrollService: EnrollmentsService) {}
 
-  @UseGuards(RolesGuard)
   @Roles(Role.student)
   @Post(':courseId')
   async enroll(
@@ -25,14 +24,12 @@ export class EnrollmentsController {
     return await this.enrollService.enroll(userId, courseId);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(Role.student)
   @Get('my')
   async enrolledCourse(@GetUser('id') userId: string) {
     return await this.enrollService.getMine(userId);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(Role.student)
   @Patch(':id/status')
   async updateEnrollmentStatus(
@@ -42,10 +39,10 @@ export class EnrollmentsController {
     return await this.enrollService.cancelEnrollment(enrollmentId, userId);
   }
 
-  @UseGuards(RolesGuard, OwnershipGuard)
-  @CheckOwner({ entity: 'course' })
+  @UseGuards(OwnershipGuard)
+  @CheckOwner({ entity: 'course', paramKey: 'courseId' })
   @Roles(Role.instructor, Role.admin)
-  @Get('course/:courseId ')
+  @Get('course/:courseId')
   async getEnroller(@Param('courseId') courseId: string) {
     return await this.enrollService.getEnrollers(courseId);
   }

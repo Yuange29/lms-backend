@@ -10,13 +10,12 @@ import { SubmissionAnswersDto } from './dto/create-submissions.dto';
 import { SubmissionsService } from './submissions.service';
 
 @Controller('submissions')
-@UseGuards(JwtAccessGuard)
+@UseGuards(JwtAccessGuard, RolesGuard)
 export class SubmissionsController {
   constructor(private readonly submissionService: SubmissionsService) {}
 
-  @Post(':quizId')
-  @UseGuards(RolesGuard)
   @Roles(Role.student)
+  @Post(':quizId')
   async createSubmission(
     @Param('quizId') quizId: string,
     @GetUser('id') userId: string,
@@ -25,14 +24,13 @@ export class SubmissionsController {
     return await this.submissionService.create(createReq, userId, quizId);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(Role.student)
   @Get(':quizId/my')
   async getSubmission(
     @Param('quizId') quizId: string,
     @GetUser('id') userId: string,
   ) {
-    return await this.submissionService.getQuiz(quizId, userId);
+    return await this.submissionService.getMySubmission(quizId, userId);
   }
 }
 // POST   /quizzes/:quizId/submissions        # student nộp bài
