@@ -50,7 +50,7 @@ export class QuizzesController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'course', paramKey: 'courseId' })
+  @CheckOwner({ entity: 'course' })
   @Post(':courseId/quizzes')
   async createQuiz(
     @Param('courseId') courseId: string,
@@ -61,7 +61,7 @@ export class QuizzesController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'quiz', paramKey: 'quizId' })
+  @CheckOwner({ entity: 'quiz' })
   @Patch(':courseId/quizzes/:quizId')
   async updateQuiz(
     @Param('courseId') courseId: string,
@@ -75,7 +75,7 @@ export class QuizzesController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
-  @CheckOwner({ entity: 'quiz', paramKey: 'quizId' })
+  @CheckOwner({ entity: 'quiz' })
   @Delete(':courseId/quizzes/:quizId')
   async deleteQuiz(
     @Param('courseId') courseId: string,

@@ -29,7 +29,7 @@ export class SectionsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.admin, Role.instructor)
-  @CheckOwner({ entity: 'course', paramKey: 'courseId' })
+  @CheckOwner({ entity: 'course' })
   @Post(':courseId/sections')
   async createSection(
     @Param('courseId') courseId: string,
@@ -50,7 +50,7 @@ export class SectionsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'section', paramKey: 'sectionId' })
+  @CheckOwner({ entity: 'section' })
   @Patch(':courseId/sections/:sectionId')
   async updateSection(
     @Param('courseId') courseId: string,
@@ -64,7 +64,7 @@ export class SectionsController {
 
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
-  @CheckOwner({ entity: 'section', paramKey: 'sectionId' })
+  @CheckOwner({ entity: 'section' })
   @Delete(':courseId/sections/:sectionId')
   async deleteSection(
     @Param('courseId') courseId: string,
