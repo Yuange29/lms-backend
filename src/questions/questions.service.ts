@@ -49,7 +49,7 @@ export class QuestionsService {
     }));
   }
 
-  async create(createReq: CreateQuestionsDto, quizId) {
+  async create(createReq: CreateQuestionsDto, quizId: string) {
     const lastQuestionOrder = await this.questionRepo.findOne({
       where: { quiz_id: quizId },
       order: { order_index: 'DESC' },
@@ -57,7 +57,8 @@ export class QuestionsService {
 
     return await this.questionRepo.save(
       this.questionRepo.create({
-        ...createReq,
+        question_text: createReq.question_text,
+        type: createReq.type,
         quiz_id: quizId,
         order_index: (lastQuestionOrder?.order_index ?? -1) + 1,
       }),

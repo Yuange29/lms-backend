@@ -27,7 +27,7 @@ export class Question {
   question_text!: string;
 
   @Column()
-  type!: QuestionType; // single_choice | multiple_choice
+  type!: QuestionType; // single-choice | multiple-choice
 
   @Column({ default: 0 })
   order_index!: number;
