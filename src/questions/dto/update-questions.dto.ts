@@ -5,9 +5,9 @@ export class UpdateQuestionsDto {
   @IsString()
   @MinLength(3)
   @IsOptional()
-  questionText!: string;
+  questionText?: string;
 
   @IsString()
   @IsOptional()
-  type!: QuestionType;
+  type?: QuestionType;
 }
