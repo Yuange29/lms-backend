@@ -41,12 +41,9 @@ export class QuestionsController {
   @UseGuards(OwnershipGuard)
   @Roles(Role.instructor, Role.admin)
   @CheckOwner({ entity: 'quiz', paramKey: 'quizId' })
-  @Post(':quizId/questions')
-  async createQuestion(
-    @Param('quizId') quizId: string,
-    @Body() createReq: CreateQuestionsDto,
-  ) {
-    return { question: await this.questionService.create(createReq, quizId) };
+  @Post('/questions')
+  async createQuestion(@Body() createReq: CreateQuestionsDto) {
+    return { question: await this.questionService.create(createReq) };
   }
 
   @UseGuards(OwnershipGuard)
