@@ -26,7 +26,7 @@ export class AnswersController {
 
   @UseGuards(RolesGuard, OwnershipGuard)
   @Roles(Role.instructor, Role.instructor)
-  @CheckOwner({ entity: 'answer', paramKey: 'questionId' })
+  @CheckOwner({ entity: 'question', paramKey: 'questionId' })
   @Post(':questionId/answers')
   async creatAnswer(
     @Param('questionId') questionId: string,
@@ -37,8 +37,8 @@ export class AnswersController {
 
   @UseGuards(RolesGuard, OwnershipGuard)
   @Roles(Role.instructor, Role.instructor)
-  @CheckOwner({ entity: 'answer', paramKey: 'questionId' })
-  @Patch(':questionId/answers:answerId')
+  @CheckOwner({ entity: 'answer', paramKey: 'answerId' })
+  @Patch(':questionId/answers/:answerId')
   async updateAnswer(
     @Param('questionId') questionId: string,
     @Param('answerId') answerId: string,
@@ -50,8 +50,8 @@ export class AnswersController {
   }
   @UseGuards(RolesGuard, OwnershipGuard)
   @Roles(Role.instructor, Role.instructor)
-  @CheckOwner({ entity: 'answer', paramKey: 'questionId' })
-  @Delete(':questionId/answers:answerId')
+  @CheckOwner({ entity: 'answer', paramKey: 'answerId' })
+  @Delete(':questionId/answers/:answerId')
   async deleteAnswer(
     @Param('questionId') questionId: string,
     @Param('answerId') answerId: string,
